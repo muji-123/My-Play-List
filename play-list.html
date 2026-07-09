@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>遊玩清單</title>
+
+<!-- 網頁版 favicon(圓形版) -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<!-- iPhone 加到主畫面用的 app icon(圓角方形版) -->
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="遊玩清單">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0F2620">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16302B;
+    --ink-soft:#2C4A44;
+    --paper:#FBF6EC;
+    --paper-shadow:#EFE7D6;
+    --bg:#0F2620;
+    --coral:#FF6849;
+    --coral-deep:#E24E33;
+    --mustard:#E8B33D;
+    --line:#D8CFB8;
+    --muted:#7C8F87;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(232,179,61,0.10), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(255,104,73,0.10), transparent 45%),
+      var(--bg);
+    min-height:100vh;
+    font-family:'Noto Sans TC', sans-serif;
+    color:var(--ink);
+    padding-bottom:100px;
+  }
+  header{
+    padding:36px 20px 24px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.35em;
+    color:var(--mustard);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:38px;
+    color:#FBF6EC;
+    margin:6px 0 2px;
+    letter-spacing:0.01em;
+  }
+  .subtitle{
+    color:#9FB3AC;
+    font-size:13px;
+    margin:0;
+  }
+
+  .toolbar{
+    max-width:640px;
+    margin:0 auto 18px;
+    padding:0 16px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .sync-bar{
+    max-width:640px;
+    margin:0 auto 12px;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    font-size:12px;
+    color:#9FB3AC;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .sync-bar #syncSettingsBtn{
+    background:none;
+    border:1px solid rgba(255,255,255,0.25);
+    color:#DDE7E2;
+    border-radius:20px;
+    padding:5px 11px;
+    font-size:11.5px;
+    cursor:pointer;
+    font-family:'Noto Sans TC',sans-serif;
+    flex-shrink:0;
+  }
+  .sync-bar #syncSettingsBtn:active{background:rgba(255,255,255,0.12);}
+  #syncStatus{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  #syncStatus.syncing{color:var(--mustard);}
+  #syncStatus.synced{color:#8FCBA8;}
+  #syncStatus.error{color:var(--coral);}
+  .search-box{
+    flex:1;
+    min-width:140px;
+    background:var(--paper);
+    border:none;
+    border-radius:12px;
+    padding:11px 14px;
+    font-family:'Noto Sans TC',sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    outline:none;
+  }
+  select.filter{
+    background:var(--paper);
+    border:none;
+    border-radius:12px;
+    padding:11px 10px;
+    font-family:'Noto Sans TC',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    outline:none;
+  }
+
+  .list{
+    max-width:640px;
+    margin:0 auto;
+    padding:0 16px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .empty{
+    text-align:center;
+    color:#9FB3AC;
+    font-size:14px;
+    padding:60px 20px;
+    line-height:1.9;
+  }
+  .empty span{font-size:32px;display:block;margin-bottom:8px;}
+
+  /* Ticket card */
+  .ticket{
+    display:flex;
+    background:var(--paper);
+    border-radius:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    position:relative;
+    overflow:hidden;
+  }
+  .ticket.done{opacity:0.62;}
+  .ticket-stub{
+    width:76px;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:14px 6px;
+    background:var(--ink);
+    color:var(--paper);
+    position:relative;
+  }
+  .ticket-stub .icon{font-size:26px;line-height:1;}
+  .ticket-stub .cat-label{
+    font-size:10px;
+    writing-mode:vertical-rl;
+    letter-spacing:0.1em;
+    color:#B9CBC5;
+    font-family:'JetBrains Mono',monospace;
+  }
+  /* perforation */
+  .perf{
+    width:0;
+    position:relative;
+    border-left:2px dashed var(--line);
+  }
+  .perf::before, .perf::after{
+    content:"";
+    position:absolute;
+    left:-9px;
+    width:18px;height:18px;
+    background:var(--bg);
+    border-radius:50%;
+  }
+  .perf::before{top:-9px;}
+  .perf::after{bottom:-9px;}
+
+  .ticket-body{
+    flex:1;
+    padding:16px 16px 14px 18px;
+    min-width:0;
+  }
+  .ticket-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .name{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:19px;
+    color:var(--ink);
+    margin:0 0 6px;
+    word-break:break-word;
+  }
+  .ticket.done .name{text-decoration:line-through; text-decoration-color:var(--coral-deep);}
+
+  .status-badge{
+    flex-shrink:0;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    padding:4px 9px;
+    border-radius:20px;
+    cursor:pointer;
+    border:1.5px solid transparent;
+    white-space:nowrap;
+    user-select:none;
+  }
+  .status-want{background:#FFF1E9; color:var(--coral-deep); border-color:#FFD3C2;}
+  .status-scheduled{background:#FFF6DD; color:#93720E; border-color:var(--mustard);}
+  .status-done{background:#E7F0EA; color:var(--ink-soft); border-color:#BFD8CC;}
+
+  .meta-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .meta-row .ico{opacity:0.7; font-size:13px;}
+  .loc-link{color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:2px;}
+  .loc-link:active{color:var(--coral-deep);}
+  .meta-row.time{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--muted);}
+
+  .notes{
+    margin-top:8px;
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.6;
+    border-top:1px dashed var(--line);
+    padding-top:8px;
+  }
+
+  .ticket-actions{
+    margin-top:10px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .link-chip{
+    font-size:12.5px;
+    font-family:'JetBrains Mono',monospace;
+    background:var(--ink);
+    color:var(--paper);
+    text-decoration:none;
+    padding:6px 12px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+  }
+  .link-chip:active{background:var(--coral-deep);}
+  .icon-btn{
+    background:none;
+    border:none;
+    font-size:15px;
+    cursor:pointer;
+    color:var(--muted);
+    padding:6px;
+    line-height:1;
+  }
+  .icon-btn:active{color:var(--coral-deep);}
+
+  /* FAB */
+  .fab{
+    position:fixed;
+    bottom:24px;
+    right:50%;
+    transform:translateX(320px);
+    width:58px;height:58px;
+    border-radius:50%;
+    background:var(--coral);
+    color:white;
+    border:none;
+    font-size:28px;
+    box-shadow:0 10px 24px rgba(255,104,73,0.45);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  @media (max-width:680px){
+    .fab{ right:22px; transform:none; }
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(15,38,32,0.55);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--paper);
+    width:100%;
+    max-width:520px;
+    border-radius:22px 22px 0 0;
+    padding:22px 20px 26px;
+    max-height:88vh;
+    overflow-y:auto;
+    animation:slideUp .25s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;}}
+  .sheet h2{
+    font-family:'Baloo 2',sans-serif;
+    margin:0 0 16px;
+    font-size:21px;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:5px;
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:0.03em;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:14.5px;
+    font-family:'Noto Sans TC',sans-serif;
+    color:var(--ink);
+    outline:none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--coral);}
+  .field textarea{resize:vertical; min-height:56px;}
+  .cat-picker{display:flex; gap:8px; flex-wrap:wrap;}
+  .cat-opt{
+    padding:8px 12px;
+    border-radius:20px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .cat-opt.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .sheet-actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+  }
+  .btn{
+    flex:1;
+    padding:13px;
+    border-radius:12px;
+    border:none;
+    font-size:15px;
+    font-weight:700;
+    font-family:'Noto Sans TC',sans-serif;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--coral); color:white;}
+  .btn-primary:active{background:var(--coral-deep);}
+  .btn-secondary{background:#EFE7D6; color:var(--ink-soft);}
+  .btn-delete{
+    background:none;
+    color:var(--coral-deep);
+    text-decoration:underline;
+    font-size:13px;
+    border:none;
+    cursor:pointer;
+    margin-top:14px;
+    display:block;
+    width:100%;
+    text-align:center;
+    font-family:'Noto Sans TC',sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">MY PLAYLIST · 001</div>
+  <h1>遊玩清單</h1>
+  <p class="subtitle">想去的、排定的、玩過的,通通收在這裡</p>
+</header>
+
+<div class="sync-bar" id="syncBar">
+  <span id="syncStatus">尚未設定 Google Sheets 同步</span>
+  <button id="syncSettingsBtn">⚙️ 設定同步</button>
+</div>
+
+<div class="toolbar">
+  <input type="text" class="search-box" id="searchInput" placeholder="搜尋項目、地點…">
+  <select class="filter" id="filterCat"><option value="">全部分類</option></select>
+  <select class="filter" id="filterStatus">
+    <option value="">全部狀態</option>
+    <option value="want">想去</option>
+    <option value="scheduled">已安排</option>
+    <option value="done">已完成</option>
+  </select>
+</div>
+
+<div class="list" id="list"></div>
+
+<button class="fab" id="fabAdd" aria-label="新增項目">+</button>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2 id="sheetTitle">新增項目</h2>
+    <input type="hidden" id="editId">
+
+    <div class="field">
+      <label>名稱 *</label>
+      <input type="text" id="fName" placeholder="例如:陽明山賞花">
+    </div>
+
+    <div class="field">
+      <label>分類</label>
+      <div class="cat-picker" id="catPicker"></div>
+    </div>
+
+    <div class="field">
+      <label>地點</label>
+      <input type="text" id="fLocation" placeholder="例如:台北市北投區">
+    </div>
+
+    <div class="field">
+      <label>開始時間</label>
+      <input type="datetime-local" id="fTime">
+    </div>
+
+    <div class="field">
+      <label>結束時間(選填)</label>
+      <input type="datetime-local" id="fEndTime">
+    </div>
+
+    <div class="field">
+      <label>連結</label>
+      <input type="url" id="fLink" placeholder="https://…">
+    </div>
+
+    <div class="field">
+      <label>狀態</label>
+      <select id="fStatus">
+        <option value="want">想去</option>
+        <option value="scheduled">已安排</option>
+        <option value="done">已完成</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>備註</label>
+      <textarea id="fNotes" placeholder="交通方式、注意事項、跟誰去…"></textarea>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn btn-secondary" id="cancelBtn">取消</button>
+      <button class="btn btn-primary" id="saveBtn">儲存</button>
+    </div>
+    <button class="btn-delete" id="deleteBtn" style="display:none;">刪除這個項目</button>
+  </div>
+</div>
+
+<div class="overlay" id="syncOverlay">
+  <div class="sheet">
+    <h2>Google Sheets 同步設定</h2>
+    <div class="field">
+      <label>Apps Script 網頁應用程式網址</label>
+      <input type="url" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+    </div>
+    <p style="font-size:12.5px; color:var(--muted); line-height:1.7; margin-top:-6px;">
+      把 Code.gs 部署成「網頁應用程式」後,將產生的網址貼在這裡。設定後會自動雙向同步。
+    </p>
+    <div class="sheet-actions">
+      <button class="btn btn-secondary" id="syncCancelBtn">取消</button>
+      <button class="btn btn-primary" id="syncSaveBtn">儲存並同步</button>
+    </div>
+    <button class="btn-delete" id="syncClearBtn">停用同步</button>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {id:'sight', label:'景點', icon:'🎡'},
+  {id:'food', label:'美食', icon:'🍜'},
+  {id:'event', label:'活動', icon:'🎉'},
+  {id:'shopping', label:'購物', icon:'🛍️'},
+  {id:'game', label:'遊戲', icon:'🎮'},
+  {id:'other', label:'其他', icon:'📌'},
+];
+const STATUS_LABEL = {want:'想去', scheduled:'已安排', done:'已完成'};
+
+const STORE_KEY = 'playlist_items_v1';
+const SHEET_URL_KEY = 'playlist_sheet_url';
+let items = [];
+try{ items = JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ items = []; }
+let sheetUrl = localStorage.getItem(SHEET_URL_KEY) || '';
+
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ---- Google Sheets sync (JSONP) ----
+const syncStatusEl = document.getElementById('syncStatus');
+
+function setSyncStatus(text, cls){
+  syncStatusEl.textContent = text;
+  syncStatusEl.className = cls || '';
+}
+
+function refreshSyncStatusIdle(){
+  if(!sheetUrl){ setSyncStatus('尚未設定 Google Sheets 同步'); return; }
+  const last = localStorage.getItem('playlist_last_sync');
+  setSyncStatus(last ? ('已同步 · ' + last) : '已設定同步,尚未同步過', 'synced');
+}
+
+function jsonp(url, params){
+  return new Promise((resolve, reject)=>{
+    const cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
+    const timeout = setTimeout(()=>{
+      cleanup();
+      reject(new Error('timeout'));
+    }, 10000);
+    function cleanup(){
+      clearTimeout(timeout);
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = (data)=>{ cleanup(); resolve(data); };
+    const qs = new URLSearchParams({...params, callback: cbName}).toString();
+    const script = document.createElement('script');
+    script.src = url + (url.includes('?') ? '&' : '?') + qs;
+    script.onerror = ()=>{ cleanup(); reject(new Error('network error')); };
+    document.body.appendChild(script);
+  });
+}
+
+function toSheetParams(it){
+  return {
+    id: it.id, name: it.name, category: it.category, location: it.location||'',
+    time: it.time||'', endTime: it.endTime||'', link: it.link||'',
+    status: it.status, notes: it.notes||'',
+    createdAt: it.createdAt, updatedAt: it.updatedAt||it.createdAt
+  };
+}
+
+function syncPush(it){
+  if(!sheetUrl) return;
+  jsonp(sheetUrl, {action:'save', ...toSheetParams(it)}).catch(()=>{});
+}
+function syncDeleteRemote(id){
+  if(!sheetUrl) return;
+  jsonp(sheetUrl, {action:'delete', id}).catch(()=>{});
+}
+
+async function syncPullAndMerge(showStatus){
+  if(!sheetUrl) return;
+  if(showStatus) setSyncStatus('同步中…', 'syncing');
+  try{
+    const res = await jsonp(sheetUrl, {action:'list'});
+    if(!res || !res.ok) throw new Error(res && res.error || '讀取失敗');
+    const remoteItems = res.items || [];
+    const localById = {};
+    items.forEach(it=> localById[it.id]=it);
+    const remoteIds = new Set();
+
+    remoteItems.forEach(r=>{
+      remoteIds.add(String(r.id));
+      const local = localById[r.id];
+      const remoteUpdated = Number(r.updatedAt)||0;
+      if(!local){
+        items.push(normalizeRemote(r));
+      }else{
+        const localUpdated = Number(local.updatedAt)||0;
+        if(remoteUpdated > localUpdated){
+          Object.assign(local, normalizeRemote(r));
+        }
+      }
+    });
+
+    // push local-only items (created while offline / before sync was set up)
+    items.filter(it=> !remoteIds.has(String(it.id))).forEach(it=> syncPush(it));
+
+    save();
+    render();
+    const now = new Date();
+    const stamp = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    localStorage.setItem('playlist_last_sync', stamp);
+    setSyncStatus('已同步 · ' + stamp, 'synced');
+  }catch(err){
+    setSyncStatus('同步失敗,請檢查網址', 'error');
+  }
+}
+
+function normalizeRemote(r){
+  return {
+    id: String(r.id), name: r.name||'', category: r.category||'other',
+    location: r.location||'', time: r.time||'', endTime: r.endTime||'',
+    link: r.link||'', status: r.status||'want', notes: r.notes||'',
+    createdAt: Number(r.createdAt)||Date.now(), updatedAt: Number(r.updatedAt)||Date.now()
+  };
+}
+
+// sync settings modal
+const syncOverlay = document.getElementById('syncOverlay');
+document.getElementById('syncSettingsBtn').onclick = ()=>{
+  document.getElementById('sheetUrlInput').value = sheetUrl;
+  syncOverlay.classList.add('open');
+};
+document.getElementById('syncCancelBtn').onclick = ()=> syncOverlay.classList.remove('open');
+syncOverlay.onclick = (e)=>{ if(e.target===syncOverlay) syncOverlay.classList.remove('open'); };
+document.getElementById('syncSaveBtn').onclick = ()=>{
+  const url = document.getElementById('sheetUrlInput').value.trim();
+  if(!url){ alert('請貼上 Apps Script 網址'); return; }
+  sheetUrl = url;
+  localStorage.setItem(SHEET_URL_KEY, url);
+  syncOverlay.classList.remove('open');
+  syncPullAndMerge(true);
+};
+document.getElementById('syncClearBtn').onclick = ()=>{
+  sheetUrl = '';
+  localStorage.removeItem(SHEET_URL_KEY);
+  localStorage.removeItem('playlist_last_sync');
+  syncOverlay.classList.remove('open');
+  refreshSyncStatusIdle();
+};
+
+function catInfo(id){ return CATEGORIES.find(c=>c.id===id) || CATEGORIES[CATEGORIES.length-1]; }
+
+function fmtTime(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const days=['日','一','二','三','四','五','六'];
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} (${days[d.getDay()]}) ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fmtTimeRange(startIso, endIso){
+  if(!startIso) return '';
+  const start = new Date(startIso);
+  if(isNaN(start)) return '';
+  if(!endIso) return fmtTime(startIso);
+  const end = new Date(endIso);
+  if(isNaN(end)) return fmtTime(startIso);
+  const days=['日','一','二','三','四','五','六'];
+  const pad=n=>String(n).padStart(2,'0');
+  const sameDay = start.toDateString() === end.toDateString();
+  if(sameDay){
+    return `${start.getMonth()+1}/${start.getDate()} (${days[start.getDay()]}) ${pad(start.getHours())}:${pad(start.getMinutes())} – ${pad(end.getHours())}:${pad(end.getMinutes())}`;
+  }
+  return `${fmtTime(startIso)} → ${fmtTime(endIso)}`;
+}
+
+// populate filter category select
+const filterCat = document.getElementById('filterCat');
+CATEGORIES.forEach(c=>{
+  const o=document.createElement('option');
+  o.value=c.id; o.textContent = c.icon+' '+c.label;
+  filterCat.appendChild(o);
+});
+
+// populate cat picker in form
+const catPicker = document.getElementById('catPicker');
+let selectedCat = CATEGORIES[0].id;
+function renderCatPicker(){
+  catPicker.innerHTML='';
+  CATEGORIES.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='cat-opt' + (c.id===selectedCat ? ' active':'');
+    div.textContent = c.icon+' '+c.label;
+    div.onclick=()=>{ selectedCat=c.id; renderCatPicker(); };
+    catPicker.appendChild(div);
+  });
+}
+
+const listEl = document.getElementById('list');
+
+function render(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const fc = filterCat.value;
+  const fs = document.getElementById('filterStatus').value;
+
+  let filtered = items.filter(it=>{
+    if(fc && it.category!==fc) return false;
+    if(fs && it.status!==fs) return false;
+    if(q){
+      const hay = (it.name+' '+it.location).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b)=>{
+    if(a.status==='done' && b.status!=='done') return 1;
+    if(b.status==='done' && a.status!=='done') return -1;
+    if(a.time && b.time) return a.time.localeCompare(b.time);
+    if(a.time) return -1;
+    if(b.time) return 1;
+    return b.createdAt - a.createdAt;
+  });
+
+  listEl.innerHTML='';
+  if(filtered.length===0){
+    listEl.innerHTML = `<div class="empty"><span>🎟️</span>還沒有項目,點右下角「+」新增第一個吧</div>`;
+    return;
+  }
+
+  filtered.forEach(it=>{
+    const c = catInfo(it.category);
+    const card = document.createElement('div');
+    card.className = 'ticket' + (it.status==='done' ? ' done':'');
+    card.innerHTML = `
+      <div class="ticket-stub">
+        <div class="icon">${c.icon}</div>
+        <div class="cat-label">${c.label}</div>
+      </div>
+      <div class="perf"></div>
+      <div class="ticket-body">
+        <div class="ticket-top">
+          <h3 class="name">${escapeHtml(it.name)}</h3>
+          <span class="status-badge status-${it.status}" data-id="${it.id}">${STATUS_LABEL[it.status]}</span>
+        </div>
+        ${it.location ? `<div class="meta-row"><span class="ico">📍</span><a class="loc-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(it.location)}" target="_blank" rel="noopener">${escapeHtml(it.location)}</a></div>` : ''}
+        ${it.time ? `<div class="meta-row time"><span class="ico">🕒</span><span>${fmtTimeRange(it.time, it.endTime)}</span></div>` : ''}
+        ${it.notes ? `<div class="notes">${escapeHtml(it.notes)}</div>` : ''}
+        <div class="ticket-actions">
+          ${it.link ? `<a class="link-chip" href="${escapeAttr(it.link)}" target="_blank" rel="noopener">🔗 前往連結</a>` : ''}
+          <span style="flex:1"></span>
+          <button class="icon-btn edit-btn" data-id="${it.id}">✏️</button>
+        </div>
+      </div>
+    `;
+    listEl.appendChild(card);
+  });
+
+  document.querySelectorAll('.status-badge').forEach(b=>{
+    b.onclick = ()=> cycleStatus(b.dataset.id);
+  });
+  document.querySelectorAll('.edit-btn').forEach(b=>{
+    b.onclick = ()=> openEdit(b.dataset.id);
+  });
+}
+
+function cycleStatus(id){
+  const order = ['want','scheduled','done'];
+  const it = items.find(i=>i.id===id);
+  if(!it) return;
+  const idx = order.indexOf(it.status);
+  it.status = order[(idx+1)%order.length];
+  it.updatedAt = Date.now();
+  save(); render();
+  syncPush(it);
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+// Modal handling
+const overlay = document.getElementById('overlay');
+const sheetTitle = document.getElementById('sheetTitle');
+const deleteBtn = document.getElementById('deleteBtn');
+
+function openAdd(){
+  document.getElementById('editId').value='';
+  document.getElementById('fName').value='';
+  document.getElementById('fLocation').value='';
+  document.getElementById('fTime').value='';
+  document.getElementById('fEndTime').value='';
+  document.getElementById('fLink').value='';
+  document.getElementById('fStatus').value='want';
+  document.getElementById('fNotes').value='';
+  selectedCat = CATEGORIES[0].id;
+  renderCatPicker();
+  sheetTitle.textContent = '新增項目';
+  deleteBtn.style.display='none';
+  overlay.classList.add('open');
+}
+
+function openEdit(id){
+  const it = items.find(i=>i.id===id);
+  if(!it) return;
+  document.getElementById('editId').value = it.id;
+  document.getElementById('fName').value = it.name;
+  document.getElementById('fLocation').value = it.location || '';
+  document.getElementById('fTime').value = it.time || '';
+  document.getElementById('fEndTime').value = it.endTime || '';
+  document.getElementById('fLink').value = it.link || '';
+  document.getElementById('fStatus').value = it.status;
+  document.getElementById('fNotes').value = it.notes || '';
+  selectedCat = it.category;
+  renderCatPicker();
+  sheetTitle.textContent = '編輯項目';
+  deleteBtn.style.display='block';
+  overlay.classList.add('open');
+}
+
+function closeSheet(){ overlay.classList.remove('open'); }
+
+document.getElementById('fabAdd').onclick = openAdd;
+document.getElementById('cancelBtn').onclick = closeSheet;
+overlay.onclick = (e)=>{ if(e.target===overlay) closeSheet(); };
+
+document.getElementById('saveBtn').onclick = ()=>{
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ alert('請輸入名稱'); return; }
+  const id = document.getElementById('editId').value;
+  const data = {
+    name,
+    category: selectedCat,
+    location: document.getElementById('fLocation').value.trim(),
+    time: document.getElementById('fTime').value,
+    endTime: document.getElementById('fEndTime').value,
+    link: document.getElementById('fLink').value.trim(),
+    status: document.getElementById('fStatus').value,
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+  let target;
+  if(id){
+    target = items.find(i=>i.id===id);
+    Object.assign(target, data, {updatedAt: Date.now()});
+  }else{
+    target = { id: uid(), createdAt: Date.now(), updatedAt: Date.now(), ...data };
+    items.push(target);
+  }
+  save();
+  syncPush(target);
+  closeSheet();
+  render();
+};
+
+deleteBtn.onclick = ()=>{
+  const id = document.getElementById('editId').value;
+  if(!id) return;
+  if(confirm('確定要刪除這個項目嗎?')){
+    items = items.filter(i=>i.id!==id);
+    save();
+    syncDeleteRemote(id);
+    closeSheet();
+    render();
+  }
+};
+
+document.getElementById('searchInput').addEventListener('input', render);
+filterCat.addEventListener('change', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+renderCatPicker();
+refreshSyncStatusIdle();
+render();
+if(sheetUrl){ syncPullAndMerge(true); }
+</script>
+</body>
+</html>
