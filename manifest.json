@@ -1,0 +1,20 @@
+{
+  "name": "遊玩清單",
+  "short_name": "遊玩清單",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0F2620",
+  "theme_color": "#0F2620",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
